@@ -1,13 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import Card from "@/shared/ui/Card";
 import SectionTitle from "@/shared/ui/SectionTitle";
 import PaymentRow from "./PaymentRow";
+
 import { useTrackerStore } from "../../store/trackerStore";
 import type { Payment } from "../../types/tracker";
 
-export default function PaymentsPanel() {
+type PaymentsPanelProps = {
+    refreshKey?: number;
+    onMatchPayment: (payment: Payment) => void;
+};
+
+export default function PaymentsPanel({
+                                          refreshKey = 0,
+                                          onMatchPayment,
+                                      }: PaymentsPanelProps) {
     const month = useTrackerStore((s) => s.month);
     const authorityId = useTrackerStore((s) => s.authorityId);
 
@@ -36,18 +46,24 @@ export default function PaymentsPanel() {
         })();
 
         return () => controller.abort();
-    }, [month, authorityId]);
+    }, [month, authorityId, refreshKey]);
 
     return (
-        <Card>
-            <SectionTitle
-                title="Payments received"
-                right={<span>{loading ? "Loading…" : `${rows.length} total`}</span>}
-            />
+        <Card className="overflow-hidden">
+            <div className="border-b border-slate-200 px-5 py-4">
+                <SectionTitle
+                    title="Payments"
+                    right={
+                        <span className="text-sm text-slate-500">
+              {loading ? "Loading…" : `${rows.length} total`}
+            </span>
+                    }
+                />
+            </div>
 
             <div className="overflow-x-auto">
-                <table className="w-full">
-                    <thead className="text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <table className="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead className="bg-slate-50 text-left text-slate-600">
                     <tr>
                         <th className="px-4 py-3">Date</th>
                         <th className="px-4 py-3">Authority</th>
@@ -55,13 +71,29 @@ export default function PaymentsPanel() {
                         <th className="px-4 py-3">Amount</th>
                         <th className="px-4 py-3">Unmatched</th>
                         <th className="px-4 py-3">Status</th>
+                        <th className="px-4 py-3"></th>
                     </tr>
                     </thead>
 
-                    <tbody>
+                    <tbody className="divide-y divide-slate-100 bg-white">
                     {rows.map((payment) => (
-                        <PaymentRow key={payment.payment_id} payment={payment} />
+                        <PaymentRow
+                            key={payment.payment_id}
+                            payment={payment}
+                            onMatch={() => onMatchPayment(payment)}
+                        />
                     ))}
+
+                    {!loading && rows.length === 0 ? (
+                        <tr>
+                            <td
+                                colSpan={7}
+                                className="px-4 py-8 text-center text-slate-500"
+                            >
+                                No payments found for the current filters.
+                            </td>
+                        </tr>
+                    ) : null}
                     </tbody>
                 </table>
             </div>

@@ -13,20 +13,36 @@ function tone(status: Payment["match_status"]) {
     }
 }
 
-export default function PaymentRow({ payment }: { payment: Payment }) {
+export default function PaymentRow({
+                                       payment,
+                                       onMatch,
+                                   }: {
+    payment: Payment;
+    onMatch: () => void;
+}) {
+    const canMatch = Number(payment.unmatched_amount) > 0;
+
     return (
-        <tr className="border-t border-slate-200/70 dark:border-slate-800/70">
-            <td className="px-4 py-3 text-sm">{formatDate(payment.payment_date)}</td>
-            <td className="px-4 py-3 text-sm">{payment.authority_name ?? "—"}</td>
-            <td className="px-4 py-3 text-sm font-semibold">
+        <tr className="hover:bg-slate-50">
+            <td className="px-4 py-3">{formatDate(payment.payment_date)}</td>
+            <td className="px-4 py-3">{payment.authority_name ?? "—"}</td>
+            <td className="px-4 py-3 font-medium text-slate-900">
                 {payment.payment_reference}
             </td>
-            <td className="px-4 py-3 text-sm">{formatGBP(payment.payment_amount)}</td>
-            <td className="px-4 py-3 text-sm">
-                {formatGBP(payment.unmatched_amount)}
-            </td>
+            <td className="px-4 py-3">{formatGBP(payment.payment_amount)}</td>
+            <td className="px-4 py-3">{formatGBP(payment.unmatched_amount)}</td>
             <td className="px-4 py-3">
                 <Pill tone={tone(payment.match_status)}>{payment.match_status}</Pill>
+            </td>
+            <td className="px-4 py-3 text-right">
+                <button
+                    type="button"
+                    onClick={onMatch}
+                    disabled={!canMatch}
+                    className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                    Match
+                </button>
             </td>
         </tr>
     );

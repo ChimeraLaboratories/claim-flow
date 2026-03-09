@@ -1,13 +1,21 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+
 import Card from "@/shared/ui/Card";
 import SectionTitle from "@/shared/ui/SectionTitle";
 import InvoiceRow from "./InvoiceRow";
+
 import { useTrackerStore } from "../../store/trackerStore";
 import type { Invoice } from "../../types/tracker";
 
-export default function InvoiceTable() {
+type InvoiceTableProps = {
+    refreshKey?: number;
+};
+
+export default function InvoiceTable({
+                                         refreshKey = 0,
+                                     }: InvoiceTableProps) {
     const month = useTrackerStore((s) => s.month);
     const authorityId = useTrackerStore((s) => s.authorityId);
     const search = useTrackerStore((s) => s.search);
@@ -39,7 +47,7 @@ export default function InvoiceTable() {
         })();
 
         return () => controller.abort();
-    }, [month, authorityId, search]);
+    }, [month, authorityId, search, refreshKey]);
 
     const filteredRows = useMemo(
         () => rows.filter((row) => statuses[row.status]),
@@ -47,15 +55,21 @@ export default function InvoiceTable() {
     );
 
     return (
-        <Card>
-            <SectionTitle
-                title="Invoice ledger"
-                right={<span>{loading ? "Loading…" : `${filteredRows.length} shown`}</span>}
-            />
+        <Card className="overflow-hidden">
+            <div className="border-b border-slate-200 px-5 py-4">
+                <SectionTitle
+                    title="Invoices"
+                    right={
+                        <span className="text-sm text-slate-500">
+              {loading ? "Loading…" : `${filteredRows.length} shown`}
+            </span>
+                    }
+                />
+            </div>
 
             <div className="overflow-x-auto">
-                <table className="w-full">
-                    <thead className="text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <table className="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead className="bg-slate-50 text-left text-slate-600">
                     <tr>
                         <th className="px-4 py-3">Invoice</th>
                         <th className="px-4 py-3">Authority</th>
@@ -67,18 +81,23 @@ export default function InvoiceTable() {
                     </tr>
                     </thead>
 
-                    <tbody>
+                    <tbody className="divide-y divide-slate-100 bg-white">
                     {filteredRows.map((invoice) => (
                         <InvoiceRow key={invoice.invoice_id} invoice={invoice} />
                     ))}
+
+                    {!loading && filteredRows.length === 0 ? (
+                        <tr>
+                            <td
+                                colSpan={7}
+                                className="px-4 py-8 text-center text-slate-500"
+                            >
+                                No invoices match the current filters.
+                            </td>
+                        </tr>
+                    ) : null}
                     </tbody>
                 </table>
-
-                {!loading && filteredRows.length === 0 ? (
-                    <div className="px-4 py-6 text-sm text-slate-500">
-                        No invoices match the current filters.
-                    </div>
-                ) : null}
             </div>
         </Card>
     );
